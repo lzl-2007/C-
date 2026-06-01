@@ -8,11 +8,11 @@ set(CUDA_INCLUDE_PATH "${CUDA_PATH}/include")
 
 add_executable(${TARGET} src/main.cc)
 
-# ✅ 关键修改：使用完整路径
-set(LLAMA_LIBRARY "C:/Users/lzl67/Desktop/llama.cpp-master1/examples/simple-chat/llama.lib")
-# 如果上面路径不对，改成 llama.lib 实际所在的位置
 
-# 检查文件是否存在
+set(LLAMA_LIBRARY "C:/Users/lzl67/Desktop/llama.cpp-master1/examples/simple-chat/llama.lib")
+
+
+
 if(EXISTS ${LLAMA_LIBRARY})
     message(STATUS "Found llama.lib at: ${LLAMA_LIBRARY}")
     target_link_libraries(${TARGET} PRIVATE ${LLAMA_LIBRARY})
