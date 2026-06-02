@@ -1,0 +1,22 @@
+#include "chunk.h"
+#include<vector>
+int main(){
+    std::vector<chunk> chunks;
+    try{
+        std::ifstream chunk_file("../chunks.txt", std::ios::binary);
+        while(chunk_file.peek() != EOF){
+            chunk temp;
+            temp=temp.deserialize(chunk_file);
+            chunks.push_back(temp);
+        }
+
+        std::cout<<"成功读取文件";
+    }
+    catch(...){
+
+    }
+    for (auto i :chunks){
+        std::cout<<i.id<<i.metadata<<" "<<i.text<<std::endl;
+    }
+    return 0;
+}
