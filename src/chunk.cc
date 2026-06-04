@@ -17,6 +17,9 @@ int main(){
     }
     for (auto i :chunks){
         std::cout<<i.id<<i.metadata<<" "<<i.text<<std::endl;
+        for (auto j:i.embedding){
+            std::cout<<j;
+        }
     }
     return 0;
 }

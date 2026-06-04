@@ -8,7 +8,7 @@ struct chunk{
     uint64_t  id;
     std::string text;
     std::string metadata;
-    std::vector<float> embeddingl;
+    std::vector<float> embedding;
     // 序列化：将对象写入二进制流
     void serialize(std::ofstream& out) const {
         // 写入 id（固定8字节）
@@ -23,6 +23,15 @@ struct chunk{
         uint64_t  meta_len = static_cast<uint64_t >(metadata.size());
         out.write(reinterpret_cast<const char*>(&meta_len), sizeof(meta_len));
         out.write(metadata.data(), meta_len);
+
+        // 写入 embedding：先维度（4字节），再浮点数组
+        uint64_t  embedding_len = static_cast<uint64_t >(embedding.size());
+        out.write(reinterpret_cast<const char*>(&embedding_len), sizeof(embedding_len));
+        if (embedding_len > 0) {
+            // 将 float 数组的字节直接写入
+            out.write(reinterpret_cast<const char*>(embedding.data()), 
+                      embedding_len * sizeof(float));
+        }
     }
     
     // 反序列化：从二进制流读取并构造对象
@@ -43,12 +52,19 @@ struct chunk{
         ch.metadata.resize(meta_len);
         in.read(&ch.metadata[0], meta_len);
         
+        // 读取 embedding
+        uint64_t embedding_len;
+        in.read(reinterpret_cast<char*>(&embedding_len), sizeof(embedding_len));
+        ch.embedding.resize(embedding_len);
+        if (embedding_len > 0) {
+            in.read(reinterpret_cast<char*>(ch.embedding.data()), 
+                    embedding_len * sizeof(float));
+        }
+
         return ch;
     }
 };
-#include <iostream>
-#include <string>
-#include <vector>
+
 
 
 class UTF8Helper {
