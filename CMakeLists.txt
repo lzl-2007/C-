@@ -1,15 +1,18 @@
 ﻿cmake_minimum_required(VERSION 3.14)    # 第1行：必须最先
-project(simple-chat) 
+project(mrag) 
 set(TARGET mrag)
 
 set(CUDA_PATH "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.8")
 set(CUDA_LIB_PATH "${CUDA_PATH}/lib/x64")
 set(CUDA_INCLUDE_PATH "${CUDA_PATH}/include")
 
-add_executable(${TARGET} src/main.cc)
+add_executable(${TARGET} 
+                        src/config.cc
+                        src/llamamodel.cc
+                        src/embeddingengine.cc)
 
 
-set(LLAMA_LIBRARY "C:/Users/lzl67/Desktop/llama.cpp-master1/examples/simple-chat/llama.lib")
+set(LLAMA_LIBRARY "C:/Users/lzl67/Desktop/mrag/lib/llama.lib")
 
 
 
@@ -31,6 +34,10 @@ if(EXISTS ${LLAMA_LIBRARY})
     target_include_directories(${TARGET} PRIVATE
     "${CUDA_INCLUDE_PATH}"
     )
+
+
+    include_directories("C:/Users/lzl67/Desktop/mrag/include")
+ 
 
 else()
     message(FATAL_ERROR "llama.lib not found!")
