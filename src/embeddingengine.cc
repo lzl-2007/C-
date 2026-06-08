@@ -66,7 +66,7 @@ std::string EmbeddingEngine::sanitizeUtf8(const std::string& text) {
     
     return result;
 }
-
+/*
 std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
     // 1. 清理残缺 UTF-8 序列
     std::string clean_text = sanitizeUtf8(text);
@@ -127,8 +127,119 @@ std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
     llama_batch_free(batch);
     
     return result;
+}*/
+std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
+    std::cout << "  [1] 开始 sanitizeUtf8" << std::endl;
+    std::string clean_text = sanitizeUtf8(text);
+    std::cout << "  [2] sanitizeUtf8 完成，长度: " << clean_text.size() << std::endl;
+    
+    if (clean_text.empty()) {
+        std::cout << "  [2.5] 文本为空，返回零向量" << std::endl;
+        return std::vector<float>(getNEmbd(), 0.0f);
+    }
+    
+    std::cout << "  [3] 开始 tokenize" << std::endl;
+
+    std::cout << "  [2.6] 调用 tokenize 前，this = " << this << std::endl;
+    std::cout << "  [2.7] clean_text 地址: " << &clean_text << std::endl;
+    std::cout << "  [2.8] clean_text 内容: " << clean_text << std::endl;
+    std::cout << "  [2.9] 准备调用 tokenize" << std::endl;
+
+    
+
+    
+
+    std::vector<llama_token> tokens = tokenize(clean_text, true);
+
+    std::cout << "  [2.10] tokenize 返回" << std::endl;
+    std::cout << "  [4] tokenize 完成，token 数量: " << tokens.size() << std::endl;
+    
+    int max_tokens = std::min(getConfig().emb_n_ctx, getConfig().emb_n_batch);
+    std::cout << "  [5] max_tokens = " << max_tokens << std::endl;
+    
+    if (static_cast<int>(tokens.size()) > max_tokens) {
+        tokens.resize(max_tokens);
+        std::cout << "  [6] token 被截断到 " << max_tokens << std::endl;
+    }
+    
+    if (tokens.empty()) {
+        std::cout << "  [7] token 为空，返回零向量" << std::endl;
+        return std::vector<float>(getNEmbd(), 0.0f);
+    }
+    
+    std::cout << "  [8] 开始清空 KV Cache" << std::endl;
+    llama_memory_t memory = llama_get_memory(getContext());
+    llama_memory_clear(memory, true);
+    std::cout << "  [9] KV Cache 清空完成" << std::endl;
+    
+    std::cout << "  [10] 开始构造 batch" << std::endl;
+    llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
+    if (batch.n_tokens > 0) {
+        batch.logits[batch.n_tokens - 1] = 1;
+    }
+    std::cout << "  [11] batch 构造完成，n_tokens = " << batch.n_tokens << std::endl;
+    
+    std::cout << "  [12] 开始 llama_decode" << std::endl;
+    int ret = llama_decode(getContext(), batch);
+    std::cout << "  [13] llama_decode 返回: " << ret << std::endl;
+    
+    if (ret != 0) {
+        llama_batch_free(batch);
+        throw std::runtime_error("llama_decode failed in generateEmbedding");
+    }
+    
+    std::cout << "  [14] 开始获取 embedding" << std::endl;
+    const float* emb = nullptr;
+    int emb_dim = getNEmbd();
+    
+    emb = llama_get_embeddings_seq(getContext(), 0);
+    if (!emb) {
+        std::cout << "  [15] llama_get_embeddings_seq 失败，回退到 llama_get_embeddings" << std::endl;
+        emb = llama_get_embeddings(getContext());
+    }
+    
+    if (!emb) {
+        llama_batch_free(batch);
+        throw std::runtime_error("Failed to get embeddings");
+    }
+    
+    std::cout << "  [16] 获取成功，维度: " << emb_dim << std::endl;
+    
+    std::vector<float> result(emb, emb + emb_dim);
+    llama_batch_free(batch);
+    
+    std::cout << "  [17] generateEmbedding 完成" << std::endl;
+    return result;
 }
+
+
+
+
 int main(){
+    std::cout << "1. 开始加载配置" << std::endl;
+    AppConfig config = AppConfig::load("config.json");
+    
+    std::cout << "2. 配置加载完成" << std::endl;
+    std::cout << "   嵌入模型: " << config.emb_model_path << std::endl;
+    std::cout << "   生成模型: " << config.gen_model_path << std::endl;
+    
+    std::cout << "3. 创建 EmbeddingEngine" << std::endl;
+    EmbeddingEngine engine(config);
+    
+    std::cout << "4. EmbeddingEngine 创建成功" << std::endl;
+    
+    std::string test_text = "你好";
+    std::cout << "5. 测试文本: " << test_text << std::endl;
+    
+    std::cout << "6. 开始生成 embedding..." << std::endl;
+    std::vector<float> emb = engine.generateEmbedding(test_text);
+    
+    std::cout << "7. 生成完成，维度: " << emb.size() << std::endl;
+    
+    std::cout << "8. 程序正常结束" << std::endl;
+    return 0;
+
+
     std::string a="dsfcfsvbgdv dfsv但是分手厨房测";
     AppConfig d;
     EmbeddingEngine b(d);

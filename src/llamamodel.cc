@@ -30,7 +30,7 @@ void LlamaModelBase::createContext(const AppConfig& config) {
     
     if (mode_ == ModelMode::Embedding) {
         ctx_params.embeddings = true;
-        ctx_params.pooling_type = LLAMA_POOLING_TYPE_MEAN;
+        //ctx_params.pooling_type = LLAMA_POOLING_TYPE_MEAN;
         ctx_params.n_ctx = config.emb_n_ctx;      // 不是 config.embedding.n_ctx
         ctx_params.n_batch = config.emb_n_batch;
         ctx_params.n_ubatch = config.emb_n_ubatch;
@@ -56,6 +56,7 @@ LlamaModelBase::~LlamaModelBase() {
         model_ = nullptr;
     }
 }
+/*
 std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool add_bos) const {
     const llama_vocab* vocab = llama_model_get_vocab(model_);
     
@@ -72,5 +73,51 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
         throw std::runtime_error("Tokenization failed");
     }
     
+    return tokens;
+}*/
+std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool add_bos) const {
+    std::cout << "    [tokenize] 进入函数" << std::endl;
+    
+    if (!model_) {
+        throw std::runtime_error("tokenize: model_ is null");
+    }
+    std::string processed_text = "[CLS] " + text + " [SEP]";
+    std::cout << "    [tokenize] 获取 vocab" << std::endl;
+    const llama_vocab* vocab = llama_model_get_vocab(model_);
+    if (!vocab) {
+        throw std::runtime_error("tokenize: vocab is null");
+    }
+    
+    std::cout << "    [tokenize] 使用 common_tokenize (如果可用)" << std::endl;
+    
+    // 方法 A: 使用 common_tokenize（需要包含 common.h）
+    // std::vector<llama_token> tokens = common_tokenize(ctx, text, add_bos);
+    
+    // 方法 B: 手动指定 special = true
+    std::cout << "    [tokenize] 第一次 llama_tokenize (special = true)" << std::endl;
+    int n_tokens =llama_tokenize(vocab, processed_text.c_str(), processed_text.size(), nullptr, 0, add_bos, true);
+    std::cout << "    [tokenize] 第一次返回: n_tokens = " << n_tokens << std::endl;
+    
+    if (n_tokens < 0) {
+        // 尝试 special = false
+        std::cout << "    [tokenize] 重试 special = false" << std::endl;
+        n_tokens = llama_tokenize(vocab, processed_text.c_str(), processed_text.size(), nullptr, 0, add_bos, false);
+        std::cout << "    [tokenize] 重试返回: n_tokens = " << n_tokens << std::endl;
+        
+        if (n_tokens < 0) {
+            throw std::runtime_error("Tokenization failed with both special=true and false");
+        }
+    }
+    
+    
+    std::vector<llama_token> tokens = tokenize(processed_text, false);  // add_bos = false
+
+    //std::vector<llama_token> tokens(n_tokens);
+    n_tokens = llama_tokenize(vocab, processed_text.c_str(), processed_text.size(), tokens.data(), tokens.size(), add_bos, true);
+    if (n_tokens < 0) {
+        throw std::runtime_error("Tokenization failed on second call");
+    }
+    
+    std::cout << "    [tokenize] 完成，token 数量: " << tokens.size() << std::endl;
     return tokens;
 }
