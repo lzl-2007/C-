@@ -1,7 +1,8 @@
 #include "embeddingengine.h"
 #include <algorithm>
 #include <cstring>
-#include<iostream>
+#include <iostream>
+#include <fstream>
 EmbeddingEngine::EmbeddingEngine(const AppConfig& config)
     : LlamaModelBase(config, ModelMode::Embedding) {
 }
@@ -217,7 +218,28 @@ std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
 
 int main(){
     std::cout << "1. 开始加载配置" << std::endl;
-    AppConfig config = AppConfig::load("config.json");
+    // 尝试多个可能的配置文件路径
+    std::string config_path = "config.json";
+    AppConfig config;
+    
+    // 先尝试当前目录
+    std::ifstream test1(config_path);
+    if (test1.is_open()) {
+        test1.close();
+        config = AppConfig::load(config_path);
+    } else {
+        // 尝试上一级目录
+        config_path = "C:/Users/lzl67/Desktop/mrag/config.json";
+        std::ifstream test2(config_path);
+        if (test2.is_open()) {
+            test2.close();
+            config = AppConfig::load(config_path);
+        } else {
+            // 最后使用默认配置
+            std::cout << "提示: 未找到配置文件，使用默认配置" << std::endl;
+            config = AppConfig(); // 使用默认构造函数
+        }
+    }
     
     std::cout << "2. 配置加载完成" << std::endl;
     std::cout << "   嵌入模型: " << config.emb_model_path << std::endl;

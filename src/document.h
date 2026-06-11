@@ -19,7 +19,6 @@ private:
     static const uint64_t  OVERLAP_SIZE=50;
 public:
     static void splitByCharCount(const std::string& inputFile,
-                                  const std::string& outputPrefix,
                                   uint64_t  charsPerChunk) {
         std::regex pattern(R"(第.{1,12}回)");
         std::string chapter=""; 

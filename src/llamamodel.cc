@@ -75,13 +75,14 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
     
     return tokens;
 }*/
+/*
 std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool add_bos) const {
     std::cout << "    [tokenize] 进入函数" << std::endl;
     
     if (!model_) {
         throw std::runtime_error("tokenize: model_ is null");
     }
-    std::string processed_text = "[CLS] " + text + " [SEP]";
+    std::string processed_text = text;
     std::cout << "    [tokenize] 获取 vocab" << std::endl;
     const llama_vocab* vocab = llama_model_get_vocab(model_);
     if (!vocab) {
@@ -111,11 +112,69 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
     
     
     std::vector<llama_token> tokens = tokenize(processed_text, false);  // add_bos = false
-
+    
     //std::vector<llama_token> tokens(n_tokens);
     n_tokens = llama_tokenize(vocab, processed_text.c_str(), processed_text.size(), tokens.data(), tokens.size(), add_bos, true);
     if (n_tokens < 0) {
         throw std::runtime_error("Tokenization failed on second call");
+    }
+    
+    std::cout << "    [tokenize] 完成，token 数量: " << tokens.size() << std::endl;
+    return tokens;
+}*/
+std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool add_special) const {
+    std::cout << "    [tokenize] 进入函数" << std::endl;
+    
+    if (!model_) {
+        throw std::runtime_error("tokenize: model_ is null");
+    }
+    
+    std::cout << "    [tokenize] 获取 vocab" << std::endl;
+    const llama_vocab* vocab = llama_model_get_vocab(model_);
+    if (!vocab) {
+        throw std::runtime_error("tokenize: vocab is null");
+    }
+    
+    if (vocab) {
+        int vocab_type = llama_vocab_type(vocab);  // 获取 vocab 类型
+        std::cout << "vocab type: " << vocab_type << std::endl;
+        
+        // 常见类型：
+        // 0 = LLAMA_VOCAB_TYPE_NONE
+        // 1 = LLAMA_VOCAB_TYPE_SPM (SentencePiece)
+        // 2 = LLAMA_VOCAB_TYPE_BPE (Byte Pair Encoding)
+        // 3 = LLAMA_VOCAB_TYPE_WPM (WordPiece) ← BGE 模型应该是这个
+    }
+
+    // 空文本直接返回
+    if (text.empty()) {
+        return {};
+    }
+    
+    // 第一次调用：获取需要的 token 数量
+    std::cout << "    [tokenize] 第一次调用，获取所需大小" << std::endl;
+    int n_tokens = llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, true);
+    std::cout << "    [tokenize] 第一次返回: n_tokens = " << n_tokens << std::endl;
+    
+    if (n_tokens < 0) {
+        std::cout<<"wrong";
+        throw std::runtime_error("Tokenization failed: " + std::to_string(n_tokens));
+    }
+    
+    // 分配 tokens 数组
+    std::vector<llama_token> tokens(n_tokens);
+    
+    // 第二次调用：填充 tokens
+    int actual = llama_tokenize(vocab, text.c_str(), text.size(), tokens.data(), tokens.size(), add_special, true);
+    std::cout << "    [tokenize] 第二次返回: actual = " << actual << std::endl;
+    
+    if (actual < 0) {
+        throw std::runtime_error("Tokenization failed on second call");
+    }
+    
+    // 调整到实际大小（正常情况下 actual == n_tokens）
+    if (actual != n_tokens) {
+        tokens.resize(actual);
     }
     
     std::cout << "    [tokenize] 完成，token 数量: " << tokens.size() << std::endl;
