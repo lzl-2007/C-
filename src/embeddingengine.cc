@@ -215,7 +215,7 @@ std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
 
 
 
-
+/*
 int main(){
     std::cout << "1. 开始加载配置" << std::endl;
     // 尝试多个可能的配置文件路径
@@ -270,4 +270,4 @@ int main(){
         std::cout<<i<<" ";
     }
 
-}
+}*/

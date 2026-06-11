@@ -1,6 +1,9 @@
 #include "chunk.h"
 #include<vector>
-int main(){
+#include<iostream>
+
+// 测试函数（原 main 函数重命名）
+void testChunkSerialization() {
     std::vector<chunk> chunks;
     try{
         std::ifstream chunk_file("../chunks.txt", std::ios::binary);
@@ -21,5 +24,4 @@ int main(){
             std::cout<<j;
         }
     }
-    return 0;
 }

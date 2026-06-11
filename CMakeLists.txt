@@ -6,39 +6,47 @@ set(CUDA_PATH "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.8")
 set(CUDA_LIB_PATH "${CUDA_PATH}/lib/x64")
 set(CUDA_INCLUDE_PATH "${CUDA_PATH}/include")
 
+# 包含所有必要的源文件
 add_executable(${TARGET} 
-                        src/config.cc
-                        src/llamamodel.cc
-                        src/embeddingengine.cc)
-
+    src/config.cc
+    src/chunk.cc
+    src/document.cc
+    src/llamamodel.cc
+    src/embeddingengine.cc
+    src/vectordatabase.cc
+    src/generationengnie.cc  # 注意：文件名有拼写错误
+    src/mragapp.cc
+    src/main.cc
+)
 
 set(LLAMA_LIBRARY "C:/Users/lzl67/Desktop/mrag/lib/llama.lib")
 
-
-
 if(EXISTS ${LLAMA_LIBRARY})
     message(STATUS "Found llama.lib at: ${LLAMA_LIBRARY}")
+    
+    # 链接 llama 相关库
     target_link_libraries(${TARGET} PRIVATE ${LLAMA_LIBRARY})
     target_link_libraries(${TARGET} PRIVATE "C:/Users/lzl67/Desktop/mrag/lib/ggml.lib")
     target_link_libraries(${TARGET} PRIVATE "C:/Users/lzl67/Desktop/mrag/lib/ggml-base.lib")
     target_link_libraries(${TARGET} PRIVATE "C:/Users/lzl67/Desktop/mrag/lib/ggml-cpu.lib")
     target_link_libraries(${TARGET} PRIVATE "C:/Users/lzl67/Desktop/mrag/lib/ggml-cuda.lib")
-
+    
+    # 链接 CUDA 库
     target_link_libraries(${TARGET} PRIVATE
-    ${CUDA_LIB_PATH}/cudart.lib      # CUDA 运行时库（必需）
-    ${CUDA_LIB_PATH}/cuda.lib        # CUDA 驱动 API
-    ${CUDA_LIB_PATH}/cublas.lib      # CUDA 线性代数库（必需）
-    ws2_32
-    winmm
+        ${CUDA_LIB_PATH}/cudart.lib      # CUDA 运行时库（必需）
+        ${CUDA_LIB_PATH}/cuda.lib        # CUDA 驱动 API
+        ${CUDA_LIB_PATH}/cublas.lib      # CUDA 线性代数库（必需）
+        ws2_32
+        winmm
     )
+    
+    # 包含目录
     target_include_directories(${TARGET} PRIVATE
-    "${CUDA_INCLUDE_PATH}"
+        "${CUDA_INCLUDE_PATH}"
+        "C:/Users/lzl67/Desktop/mrag/include"
+        "C:/Users/lzl67/Desktop/mrag/src"
     )
-
-
-    include_directories("C:/Users/lzl67/Desktop/mrag/include")
- 
-
+    
 else()
     message(FATAL_ERROR "llama.lib not found!")
 endif()

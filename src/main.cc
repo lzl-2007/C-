@@ -1,211 +1,176 @@
-#include "C:/Users/lzl67/Desktop/mrag/include/llama/llama.h"
-#include <clocale>
-#include <cstdio>
-#include <cstring>
+#include "mragapp.h"
+#include "config.h"
 #include <iostream>
 #include <string>
-#include <vector>
+#include <memory>
+#include <cstdlib>
+#include <clocale>
 
-static void print_usage(int, char ** argv) {
-    printf("\nexample usage:\n");
-    printf("\n    %s -m model.gguf [-c context_size] [-ngl n_gpu_layers]\n", argv[0]);
-    printf("\n");
+// 显示使用说明
+static void print_usage(const std::string& program_name) {
+    std::cout << "\nMRAG (Multi-modal Retrieval Augmented Generation) 系统\n";
+    std::cout << "用法:\n";
+    std::cout << "  " << program_name << " [-h] [-c config.json] [document.txt]\n";
+    std::cout << "\n选项:\n";
+    std::cout << "  -h, --help            显示此帮助信息\n";
+    std::cout << "  -c, --config FILE     指定配置文件路径 (默认: ../config.json)\n";
+    std::cout << "  document.txt          要处理的文档文件路径\n";
+    std::cout << "\n示例:\n";
+    std::cout << "  " << program_name << " -c myconfig.json king3.txt\n";
+    std::cout << "  " << program_name << " king3.txt\n";
+    std::cout << "\n交互模式:\n";
+    std::cout << "  加载文档后，输入查询问题，系统将基于文档内容生成回答\n";
+    std::cout << "  输入 'quit' 或 'exit' 退出程序\n";
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
+    // 设置本地化
     std::setlocale(LC_NUMERIC, "C");
-    std::cout<<"begin\n";
-    std::string model_path;
-    int ngl = 99;
-    int n_ctx = 2048;
-/*
-    // parse command line arguments
-    for (int i = 1; i < argc; i++) {
-        try {
-            if (strcmp(argv[i], "-m") == 0) {
-                if (i + 1 < argc) {
-                    model_path = "C:/Users/lzl67/Desktop/mrag/models/qwen2.5-1.5b-instruct-q4_k_m.gguf";
-                } else {
-                    print_usage(argc, argv);
-                    return 1;
-                }
-            } else if (strcmp(argv[i], "-c") == 0) {
-                if (i + 1 < argc) {
-                    n_ctx = std::stoi(argv[++i]);
-                } else {
-                    print_usage(argc, argv);
-                    return 1;
-                }
-            } else if (strcmp(argv[i], "-ngl") == 0) {
-                if (i + 1 < argc) {
-                    ngl = std::stoi(argv[++i]);
-                } else {
-                    print_usage(argc, argv);
-                    return 1;
-                }
+    
+    std::string config_path = "../config.json";
+    std::string document_path;
+    
+    // 解析命令行参数
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        
+        if (arg == "-h" || arg == "--help") {
+            print_usage(argv[0]);
+            return 0;
+        } else if (arg == "-c" || arg == "--config") {
+            if (i + 1 < argc) {
+                config_path = argv[++i];
             } else {
-                print_usage(argc, argv);
+                std::cerr << "错误: -c 选项需要配置文件路径\n";
                 return 1;
             }
-        } catch (std::exception & e) {
-            fprintf(stderr, "error: %s\n", e.what());
-            print_usage(argc, argv);
+        } else if (arg[0] == '-') {
+            std::cerr << "错误: 未知选项 " << arg << "\n";
+            print_usage(argv[0]);
+            return 1;
+        } else {
+            // 第一个非选项参数视为文档路径
+            if (document_path.empty()) {
+                document_path = arg;
+            } else {
+                std::cerr << "警告: 忽略额外参数 " << arg << "\n";
+            }
+        }
+    }
+    
+    if (document_path.empty()) {
+        std::cerr << "错误: 请指定要处理的文档文件\n";
+        print_usage(argv[0]);
+        return 1;
+    }
+    
+    std::cout << "========================================\n";
+    std::cout << "        MRAG 系统启动\n";
+    std::cout << "========================================\n\n";
+    
+    try {
+        // 1. 加载配置
+        std::cout << "[1/4] 加载配置文件..." << std::endl;
+        AppConfig config = AppConfig::load(config_path);
+        std::cout << "配置加载完成\n";
+        
+        // 2. 初始化 MRAG 应用
+        std::cout << "[2/4] 初始化 MRAG 应用..." << std::endl;
+        std::unique_ptr<MragApp> app;
+        try {
+            app = std::make_unique<MragApp>(config);
+            std::cout << "MRAG 应用初始化成功\n";
+        } catch (const std::exception& e) {
+            std::cerr << "初始化失败: " << e.what() << std::endl;
+            std::cerr << "请检查模型路径和配置:\n";
+            std::cerr << "  嵌入模型: " << config.emb_model_path << "\n";
+            std::cerr << "  生成模型: " << config.gen_model_path << "\n";
             return 1;
         }
-    }
-    if (model_path.empty()) {
-        print_usage(argc, argv);
-        return 1;
-    }
-*/  
-    model_path = "C:/Users/lzl67/Desktop/mrag/models/qwen2.5-7b-instruct-q4_k_m.gguf";
-    // only print errors
-    llama_log_set([](enum ggml_log_level level, const char * text, void * /* user_data */) {
-        if (level >= GGML_LOG_LEVEL_ERROR) {
-            fprintf(stderr, "%s", text);
+        
+        // 3. 加载和处理文档
+        std::cout << "[3/4] 加载和处理文档: " << document_path << std::endl;
+        if (!app->loadDocument(document_path)) {
+            std::cerr << "文档处理失败，请检查文件路径和格式\n";
+            return 1;
         }
-    }, nullptr);
-
-    // load dynamic backends
-    ggml_backend_load_all();
-
-    // initialize the model
-    llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = ngl;
-
-    llama_model * model = llama_model_load_from_file(model_path.c_str(), model_params);
-    if (!model) {
-        fprintf(stderr , "%s: error: unable to load model\n" , __func__);
-        return 1;
-    }
-
-    const llama_vocab * vocab = llama_model_get_vocab(model);
-
-    // initialize the context
-    llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = n_ctx;
-    ctx_params.n_batch = n_ctx;
-
-    llama_context * ctx = llama_init_from_model(model, ctx_params);
-    if (!ctx) {
-        fprintf(stderr , "%s: error: failed to create the llama_context\n" , __func__);
-        return 1;
-    }
-
-    // initialize the sampler
-    llama_sampler * smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-    llama_sampler_chain_add(smpl, llama_sampler_init_min_p(0.05f, 1));
-    llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.8f));
-    llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
-
-    // helper function to evaluate a prompt and generate a response
-    auto generate = [&](const std::string & prompt) {
-        std::string response;
-
-        const bool is_first = llama_memory_seq_pos_max(llama_get_memory(ctx), 0) == -1;
-
-        // tokenize the prompt
-        const int n_prompt_tokens = -llama_tokenize(vocab, prompt.c_str(), prompt.size(), NULL, 0, is_first, true);
-        std::vector<llama_token> prompt_tokens(n_prompt_tokens);
-        if (llama_tokenize(vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), is_first, true) < 0) {
-            GGML_ABORT("failed to tokenize the prompt\n");
-        }
-
-        // prepare a batch for the prompt
-        llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
-        llama_token new_token_id;
+        std::cout << "文档处理完成，共 " << app->getChunkCount() << " 个文本块\n";
+        
+        // 4. 进入交互式查询模式
+        std::cout << "[4/4] 进入交互式查询模式\n";
+        std::cout << "========================================\n";
+        std::cout << "输入 'quit' 或 'exit' 退出\n";
+        std::cout << "输入 'save' 保存块数据\n";
+        std::cout << "输入 'load' 加载块数据\n";
+        std::cout << "========================================\n\n";
+        
         while (true) {
-            // check if we have enough space in the context to evaluate this batch
-            int n_ctx = llama_n_ctx(ctx);
-            int n_ctx_used = llama_memory_seq_pos_max(llama_get_memory(ctx), 0) + 1;
-            if (n_ctx_used + batch.n_tokens > n_ctx) {
-                printf("\033[0m\n");
-                fprintf(stderr, "context size exceeded\n");
-                exit(0);
+            std::cout << "\n> ";
+            std::string question;
+            std::getline(std::cin, question);
+            
+            // 去除前后空格
+            size_t start = question.find_first_not_of(" \t\r\n");
+            if (start == std::string::npos) {
+                continue; // 空行
             }
-
-            int ret = llama_decode(ctx, batch);
-            if (ret != 0) {
-                GGML_ABORT("failed to decode, ret = %d\n", ret);
-            }
-
-            // sample the next token
-            new_token_id = llama_sampler_sample(smpl, ctx, -1);
-
-            // is it an end of generation?
-            if (llama_vocab_is_eog(vocab, new_token_id)) {
+            size_t end = question.find_last_not_of(" \t\r\n");
+            question = question.substr(start, end - start + 1);
+            
+            // 检查退出命令
+            if (question == "quit" || question == "exit") {
+                std::cout << "退出 MRAG 系统\n";
                 break;
             }
-
-            // convert the token to a string, print it and add it to the response
-            char buf[256];
-            int n = llama_token_to_piece(vocab, new_token_id, buf, sizeof(buf), 0, true);
-            if (n < 0) {
-                GGML_ABORT("failed to convert token to piece\n");
+            
+            // 检查保存命令
+            if (question == "save") {
+                std::cout << "请输入保存文件名: ";
+                std::string save_path;
+                std::getline(std::cin, save_path);
+                if (app->saveChunks(save_path)) {
+                    std::cout << "保存成功\n";
+                } else {
+                    std::cout << "保存失败\n";
+                }
+                continue;
             }
-            std::string piece(buf, n);
-            printf("%s", piece.c_str());
-            fflush(stdout);
-            response += piece;
-
-            // prepare the next batch with the sampled token
-            batch = llama_batch_get_one(&new_token_id, 1);
+            
+            // 检查加载命令
+            if (question == "load") {
+                std::cout << "请输入加载文件名: ";
+                std::string load_path;
+                std::getline(std::cin, load_path);
+                if (app->loadChunks(load_path)) {
+                    std::cout << "加载成功，共 " << app->getChunkCount() << " 个文本块\n";
+                } else {
+                    std::cout << "加载失败\n";
+                }
+                continue;
+            }
+            
+            // 正常查询
+            std::cout << "\n思考中...\n";
+            std::cout << "----------------------------------------\n";
+            
+            try {
+                std::string answer = app->query(question);
+                std::cout << answer << std::endl;
+            } catch (const std::exception& e) {
+                std::cerr << "查询失败: " << e.what() << std::endl;
+            }
+            
+            std::cout << "----------------------------------------\n";
         }
-
-        return response;
-    };
-
-    std::vector<llama_chat_message> messages;
-    std::vector<char> formatted(llama_n_ctx(ctx));
-    int prev_len = 0;
-    while (true) {
-        // get user input
-        printf("\033[32m> \033[0m");
-        std::string user;
-        std::getline(std::cin, user);
-
-        if (user.empty()) {
-            break;
-        }
-
-        const char * tmpl = llama_model_chat_template(model, /* name */ nullptr);
-
-        // add the user input to the message list and format it
-        messages.push_back({"user", strdup(user.c_str())});
-        int new_len = llama_chat_apply_template(tmpl, messages.data(), messages.size(), true, formatted.data(), formatted.size());
-        if (new_len > (int)formatted.size()) {
-            formatted.resize(new_len);
-            new_len = llama_chat_apply_template(tmpl, messages.data(), messages.size(), true, formatted.data(), formatted.size());
-        }
-        if (new_len < 0) {
-            fprintf(stderr, "failed to apply the chat template\n");
-            return 1;
-        }
-
-        // remove previous messages to obtain the prompt to generate the response
-        std::string prompt(formatted.begin() + prev_len, formatted.begin() + new_len);
-
-        // generate a response
-        printf("\033[33m");
-        std::string response = generate(prompt);
-        printf("\n\033[0m");
-
-        // add the response to the messages
-        messages.push_back({"assistant", strdup(response.c_str())});
-        prev_len = llama_chat_apply_template(tmpl, messages.data(), messages.size(), false, nullptr, 0);
-        if (prev_len < 0) {
-            fprintf(stderr, "failed to apply the chat template\n");
-            return 1;
-        }
+        
+        std::cout << "\n========================================\n";
+        std::cout << "        MRAG 系统结束\n";
+        std::cout << "========================================\n";
+        
+        return 0;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "\n程序运行异常: " << e.what() << std::endl;
+        return 1;
     }
-
-    // free resources
-    for (auto & msg : messages) {
-        free(const_cast<char *>(msg.content));
-    }
-    llama_sampler_free(smpl);
-    llama_free(ctx);
-    llama_model_free(model);
-
-    return 0;
 }

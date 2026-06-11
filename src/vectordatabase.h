@@ -1,6 +1,9 @@
+#pragma once
+
 #include <queue>
 #include <vector>
 #include <cmath>
+#include "chunk.h"
 
 struct ScoredChunk {
     float similarity;
@@ -11,8 +14,9 @@ struct ScoredChunk {
         return similarity > other.similarity;
     }
 };
+
 std::vector<const chunk*> search(
     const std::vector<float>& query_emb,
     const std::vector<chunk>& database,
     int top_k
-); 
+);

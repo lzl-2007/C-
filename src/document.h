@@ -10,7 +10,7 @@
 #include <cstdint> 
 #include "chunk.h"
 
-std::vector<chunk> chunks;
+extern std::vector<chunk> chunks; // 声明，不是定义
 
 class StreamingUTF8Splitter {
 private:

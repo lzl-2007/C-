@@ -1,14 +1,15 @@
 #include "document.h"
 #include "chunk.h"
+#include <iostream>
+#include <fstream>
 
+// 定义全局变量（在头文件中声明为 extern）
+std::vector<chunk> chunks;
 
-
-
-int main() {              
-    StreamingUTF8Splitter a;
-    a.splitByCharCount("../king3.txt","chunk",500);
-    ChunkOverlapProcessor b;
-    b.process(chunks);
+// 测试函数（原 main 函数重命名）
+void testDocumentProcessing() {              
+    StreamingUTF8Splitter::splitByCharCount("../king3.txt", 500);
+    ChunkOverlapProcessor::process(chunks);
     try{
         std::ofstream chunk_file("../chunks.txt", std::ios::binary);
         for (auto i :chunks){
@@ -21,6 +22,4 @@ int main() {
     catch(...){
 
     }
-    
-    return 0;
 }
