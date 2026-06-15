@@ -8,7 +8,6 @@ enum class ModelMode {
     Embedding,
     Generation
 };
-
 class LlamaModelBase {
 public:
     // 构造函数
@@ -33,7 +32,7 @@ public:
     int getNEmbd() const { return llama_model_n_embd(model_); }
     const AppConfig& getConfig() const { return config_; } 
     
-protected:
+
     // tokenize 工具方法
     std::vector<llama_token> tokenize(const std::string& text, bool add_bos = true) const;
     

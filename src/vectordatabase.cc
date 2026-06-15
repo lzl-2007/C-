@@ -3,10 +3,8 @@
 #include <cmath>
 #include "chunk.h" 
 #include "vectordatabase.h"
-// 假设 Chunk 定义在这里
 
 // 检索结果：相似度 + Chunk指针
-
 float compute_norm(const std::vector<float>& vec) {
     float sum = 0.0f;
     for (float v : vec) {

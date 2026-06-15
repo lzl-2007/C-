@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.14)    # 第1行：必须最先
+﻿cmake_minimum_required(VERSION 3.14)    
 project(mrag) 
 set(TARGET mrag)
 
@@ -14,7 +14,7 @@ add_executable(${TARGET}
     src/llamamodel.cc
     src/embeddingengine.cc
     src/vectordatabase.cc
-    src/generationengnie.cc  # 注意：文件名有拼写错误
+    src/generationengine.cc  
     src/mragapp.cc
     src/main.cc
 )

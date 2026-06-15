@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     // 设置本地化
     std::setlocale(LC_NUMERIC, "C");
     
-    std::string config_path = "../config.json";
+    std::string config_path = "C:/Users/lzl67/Desktop/mrag/config.json";
     std::string document_path;
     
     // 解析命令行参数

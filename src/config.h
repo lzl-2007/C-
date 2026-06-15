@@ -2,7 +2,7 @@
 
 #include <string>
 #include <cstddef>
-
+//默认参数
 struct AppConfig {
     // 模型路径
     std::string emb_model_path = "C:/Users/lzl67/Desktop/mrag/models/bge-small-zh-v1.5-f16.gguf";
@@ -35,6 +35,6 @@ struct AppConfig {
     int emb_n_ubatch = 512;
     
     // 从 JSON 文件加载配置
-    static AppConfig load(const std::string& config_path = "../config.json");
+    static AppConfig load(const std::string& config_path = "C:/Users/lzl67/Desktop/mrag//config.json");
 };
 

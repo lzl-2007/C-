@@ -14,7 +14,7 @@ GenerationEngine::~GenerationEngine() {
 
 std::string GenerationEngine::formatContext(const std::vector<chunk>& chunks) const {
     if (chunks.empty()) {
-        return "（没有找到相关参考资料）";
+        return "没有找到chunks";
     }
     
     std::ostringstream oss;
@@ -73,23 +73,23 @@ std::string GenerationEngine::generateStream(
     const std::vector<chunk>& chunks,
     std::function<void(const std::string&)> callback
 ) {
-    // 1. 清空 KV Cache
+    //清空 KV Cache
     llama_memory_t memory = llama_get_memory(getContext());
     llama_memory_clear(memory, true);
     
-    // 2. 格式化上下文
+    //格式化上下文
     std::string context = formatContext(chunks);
     
-    // 3. 组装 prompt
+    //组装 prompt
     std::string prompt = buildPrompt(query, context);
     
-    // 4. Tokenize
+    //Tokenize
     std::vector<llama_token> prompt_tokens = tokenize(prompt, false);
     if (prompt_tokens.empty()) {
         throw std::runtime_error("Failed to tokenize prompt");
     }
     
-    // 5. Prompt Prefill：将所有 token 装入 batch，仅最后一个 token 开启 logits
+    //Prompt Prefill：将所有 token 装入 batch，仅最后一个 token 开启 logits
     llama_batch batch = llama_batch_init(prompt_tokens.size(), 0, 1);
     for (size_t i = 0; i < prompt_tokens.size(); ++i) {
         batch.token[i] = prompt_tokens[i];
@@ -107,7 +107,7 @@ std::string GenerationEngine::generateStream(
         throw std::runtime_error("Prefill failed");
     }
     
-    // 6. 初始化采样链（顺序：top_k → top_p → temperature → dist）
+    //初始化采样链
     llama_sampler_chain_params sampler_params = llama_sampler_chain_default_params();
     llama_sampler* sampler = llama_sampler_chain_init(sampler_params);
     
@@ -116,7 +116,7 @@ std::string GenerationEngine::generateStream(
     llama_sampler_chain_add(sampler, llama_sampler_init_temp(getConfig().temperature));
     llama_sampler_chain_add(sampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
     
-    // 7. 自回归生成循环
+    //自回归生成循环
     std::string response;
     int n_ctx = llama_n_ctx(getContext());
     int n_generated = 0;

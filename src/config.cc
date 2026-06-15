@@ -79,4 +79,3 @@ AppConfig AppConfig::load(const std::string& config_path) {
     
     return config;
 }
-// python convert_hf_to_gguf.py Qwen/Qwen3-Embedding-4B   --outfile C:/Users/lzl67/Desktop/mrag/models/Qwen3-Embedding-4B-f16.gguf   --outtype f16

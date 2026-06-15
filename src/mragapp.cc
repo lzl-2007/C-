@@ -45,12 +45,13 @@ bool MragApp::loadDocument(const std::string& filepath) {
         
         // 使用 StreamingUTF8Splitter 进行分块
         std::cout << "开始文档分块..." << std::endl;
+        
         StreamingUTF8Splitter::splitByCharCount(filepath, config_.chunk_size);
         
         // 从全局变量获取分块结果
         std::cout << "分块完成，获取块数据..." << std::endl;
         chunks_ = chunks; // 使用全局变量
-        
+        ChunkOverlapProcessor::process(chunks);
         std::cout << "共生成 " << chunks_.size() << " 个文本块" << std::endl;
         
         // 为所有块生成嵌入向量

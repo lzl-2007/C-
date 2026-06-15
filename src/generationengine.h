@@ -9,20 +9,13 @@ class GenerationEngine : public LlamaModelBase {
 public:
     GenerationEngine(const AppConfig& config);
     ~GenerationEngine();
-
-    // 生成回答（流式输出）
-    // 参数：
-    //   query: 用户问题
-    //   chunks: 检索到的相关文本块
-    //   callback: 流式输出回调函数，每次生成一个 token 时调用
-    // 返回：完整的回答文本
     std::string generateStream(
         const std::string& query,
         const std::vector<chunk>& chunks,
         std::function<void(const std::string&)> callback = nullptr
     );
 
-    // 生成回答（非流式，返回完整文本）
+    
     std::string generate(
         const std::string& query,
         const std::vector<chunk>& chunks
