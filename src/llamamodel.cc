@@ -69,7 +69,6 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
     if (text.empty()) {
         return {};
     }
-    std::cout<<llama_vocab_type(vocab);
     
     // 第一次调用：获取需要的 token 数量
     int n_tokens = -llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, true);
