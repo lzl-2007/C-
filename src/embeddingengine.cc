@@ -79,35 +79,103 @@ std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
     llama_memory_t memory = llama_get_memory(getContext());
     llama_memory_clear(memory, true);
     
-   //开始构造 batch"
+    
+
     llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
-    if (batch.n_tokens > 0) {
-        batch.logits[batch.n_tokens - 1] = 1;
+
+    // 分配并设置所有缺失字段
+    std::vector<llama_pos> pos(tokens.size());
+    std::vector<int32_t> n_seq_id(tokens.size(), 1);
+    std::vector<llama_seq_id*> seq_id(tokens.size());
+    std::vector<llama_seq_id> seq_id_data(tokens.size(), 0);
+    std::vector<int8_t> logits(tokens.size(), 0);
+
+    for (size_t i = 0; i < tokens.size(); i++) {
+        pos[i] = i;                    // 位置从 0 开始
+        seq_id[i] = &seq_id_data[i];  // 每个 token 属于序列 0
+        logits[i] = (i == tokens.size() - 1) ? 1 : 0;  // 只要最后一个输出
     }
-   
+
+    batch.pos = pos.data();
+    batch.n_seq_id = n_seq_id.data();
+    batch.seq_id = seq_id.data();
+    batch.logits = logits.data();
+
+
     
-    // 开始 llama_decode
-    int ret = llama_decode(getContext(), batch);
-    
-    if (ret != 0) {
+    llama_context *ctx = getContext();
+    if (ctx == nullptr) {
         llama_batch_free(batch);
-        throw std::runtime_error("llama_decode failed in generateEmbedding");
+        throw std::runtime_error("Context is null!");
     }
-    
-    const float* emb = nullptr;
-    int emb_dim = getNEmbd();
-    
-    emb = llama_get_embeddings_seq(getContext(), 0);
-    if (!emb) {
-        emb = llama_get_embeddings(getContext());
-    }
-    
-    if (!emb) {
+
+    int ret = llama_encode(ctx, batch);
+
+    if (ret != 0 && ret != 1) {
         llama_batch_free(batch);
-        throw std::runtime_error("Failed to get embeddings");
+        throw std::runtime_error("llama_encode failed");
     }
+
+ 
+  
+    std::cout.flush();
+
+    // 测试 1: 获取模型信息
+    const llama_model *model = llama_get_model(ctx);
+    int emb_dim = llama_n_embd(model);
     
-    std::vector<float> result(emb, emb + emb_dim);
+    std::cout.flush();
+
+  
+    std::cout.flush();
+    const float *all_emb = llama_get_embeddings(ctx);
+    
+    std::cout.flush();
+
+
+    std::cout.flush();
+    const float *seq_emb = llama_get_embeddings_seq(ctx, 0);
+  
+    std::cout.flush();
+
+    // 测试 4: 尝试获取第 i 个 token 的 embedding
+  
+    std::cout.flush();
+    const float *ith_emb = llama_get_embeddings_ith(ctx, 0);
+    
+    std::cout.flush();
+
+    // 测试 5: 尝试读取第一个元素
+    if (all_emb != nullptr) {
+     
+        std::cout.flush();
+        float val = all_emb[0];
+  
+        std::cout.flush();
+    }
+
+    // 测试 6: 安全复制
+    if (seq_emb != nullptr) {
+      
+        std::cout.flush();
+        std::vector<float> result(seq_emb, seq_emb + emb_dim);
+     
+        return result;
+    } else if (ith_emb != nullptr) {
+       
+        std::cout.flush();
+        std::vector<float> result(ith_emb, ith_emb + emb_dim);
+      
+        return result;
+    } else if (all_emb != nullptr) {
+       
+        std::cout.flush();
+        std::vector<float> result(all_emb, all_emb + emb_dim);
+     
+        return result;
+    } else {
+        std::cout << "所有 embedding 指针都是 NULL!" << std::endl;
+    }
     llama_batch_free(batch);
-    return result;
+    
 }

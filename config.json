@@ -1,6 +1,6 @@
 {
 "models": {
-"embedding": "C:/Users/lzl67/Desktop/mrag/models/Qwen3-Embedding-0.6B-f16.gguf",
+"embedding": "C:/Users/lzl67/Desktop/mrag/models/bge-small-zh-v1.5-f16.gguf",
 "generation": "C:/Users/lzl67/Desktop/mrag/models/qwen2.5-7b-instruct-q4_k_m.gguf",
 "n_gpu_layers": 99
 },

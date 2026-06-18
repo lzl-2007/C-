@@ -43,6 +43,7 @@ void LlamaModelBase::createContext(const AppConfig& config) {
     if (!ctx_) {
         throw std::runtime_error("Failed to create context");
     }
+
 }
 LlamaModelBase::~LlamaModelBase() {
     if (ctx_) {
@@ -59,6 +60,7 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
         throw std::runtime_error("tokenize: model_ is null");
     }
     
+    
     const llama_vocab* vocab = llama_model_get_vocab(model_);
     if (!vocab) {
         throw std::runtime_error("tokenize: vocab is null");
@@ -67,11 +69,10 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
     if (text.empty()) {
         return {};
     }
+    std::cout<<llama_vocab_type(vocab);
     
     // 第一次调用：获取需要的 token 数量
-    std::cout << "    [tokenize] 第一次调用，获取所需大小" << std::endl;
-    int n_tokens = llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, true);
-    std::cout << "    [tokenize] 第一次返回: n_tokens = " << n_tokens << std::endl;
+    int n_tokens = -llama_tokenize(vocab, text.c_str(), text.size(), nullptr, 0, add_special, true);
     
     if (n_tokens < 0) {
         std::cout<<"wrong";
@@ -89,5 +90,6 @@ std::vector<llama_token> LlamaModelBase::tokenize(const std::string& text, bool 
     if (actual != n_tokens) {
         tokens.resize(actual);
     }
+    
     return tokens;
 }

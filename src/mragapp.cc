@@ -67,6 +67,7 @@ bool MragApp::loadDocument(const std::string& filepath) {
 }
 
 void MragApp::generateEmbeddingsForAllChunks() {
+    
     if (chunks_.empty()) {
         std::cerr << "警告: 没有文本块需要生成嵌入向量" << std::endl;
         return;
@@ -76,7 +77,9 @@ void MragApp::generateEmbeddingsForAllChunks() {
     
     for (size_t i = 0; i < chunks_.size(); ++i) {
         try {
+            
             std::vector<float> embedding = embedding_engine_->generateEmbedding(chunks_[i].text);
+            std::cout<<"嵌入向量。。。";
             chunks_[i].embedding = std::move(embedding);
             
             if (i % 100 == 0 || i == chunks_.size() - 1) {
