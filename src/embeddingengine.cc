@@ -116,62 +116,26 @@ std::vector<float> EmbeddingEngine::generateEmbedding(const std::string& text) {
         throw std::runtime_error("llama_encode failed");
     }
 
- 
-  
-    std::cout.flush();
 
     // 测试 1: 获取模型信息
     const llama_model *model = llama_get_model(ctx);
     int emb_dim = llama_n_embd(model);
-    
-    std::cout.flush();
-
-  
-    std::cout.flush();
     const float *all_emb = llama_get_embeddings(ctx);
-    
-    std::cout.flush();
-
-
-    std::cout.flush();
     const float *seq_emb = llama_get_embeddings_seq(ctx, 0);
-  
-    std::cout.flush();
-
-    // 测试 4: 尝试获取第 i 个 token 的 embedding
-  
-    std::cout.flush();
     const float *ith_emb = llama_get_embeddings_ith(ctx, 0);
-    
-    std::cout.flush();
-
-    // 测试 5: 尝试读取第一个元素
     if (all_emb != nullptr) {
-     
-        std::cout.flush();
         float val = all_emb[0];
-  
-        std::cout.flush();
     }
 
     // 测试 6: 安全复制
     if (seq_emb != nullptr) {
-      
-        std::cout.flush();
         std::vector<float> result(seq_emb, seq_emb + emb_dim);
-     
         return result;
     } else if (ith_emb != nullptr) {
-       
-        std::cout.flush();
         std::vector<float> result(ith_emb, ith_emb + emb_dim);
-      
         return result;
     } else if (all_emb != nullptr) {
-       
-        std::cout.flush();
         std::vector<float> result(all_emb, all_emb + emb_dim);
-     
         return result;
     } else {
         std::cout << "所有 embedding 指针都是 NULL!" << std::endl;
