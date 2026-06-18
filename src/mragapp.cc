@@ -79,7 +79,7 @@ void MragApp::generateEmbeddingsForAllChunks() {
         try {
             
             std::vector<float> embedding = embedding_engine_->generateEmbedding(chunks_[i].text);
-            std::cout<<"嵌入向量。。。";
+            //std::cout<<"嵌入向量。。。";
             chunks_[i].embedding = std::move(embedding);
             
             if (i % 100 == 0 || i == chunks_.size() - 1) {

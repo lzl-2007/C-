@@ -66,7 +66,6 @@ void StreamingUTF8Splitter::splitByCharCount(const std::string& inputFile,
                         pos=nextBoundary;
                         if (oneChar=="\n" || oneChar=="\r")break;
                     }
-                    std::cout<<chapter;
                 
                 }
                 // 达到切割点
