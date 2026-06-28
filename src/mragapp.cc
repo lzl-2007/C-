@@ -124,6 +124,11 @@ std::vector<const chunk*> MragApp::retrieveRelevantChunks(const std::vector<floa
         std::cout << "检索相关文本块 (top_k=" << config_.top_k << ")..." << std::endl;
         std::vector<const chunk*> results = search(query_emb, chunks_, config_.top_k);
         std::cout << "检索完成，找到 " << results.size() << " 个相关块" << std::endl;
+        std::cout<<"相关块内容为："<<'\n';
+        for (const chunk *each_chunk : results){
+            std::cout<<"章回题："<<each_chunk->metadata<<'\n';
+            std::cout<<each_chunk->text<<'\n';
+        }
         return results;
     } catch (const std::exception& e) {
         std::cerr << "检索失败: " << e.what() << std::endl;
